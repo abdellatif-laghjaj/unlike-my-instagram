@@ -32,9 +32,12 @@ INSTAGRAM_USERNAME=your_username
 INSTAGRAM_PASSWORD=your_password
 INSTAGRAM_MFA_SECRET=your_totp_secret  # If 2FA enabled
 LIKE_REMOVAL_AMOUNT=1000
-BATCH_SIZE=50
-MIN_DELAY=2.0
-MAX_DELAY=5.0
+
+# Performance Settings (NEW!)
+MIN_DELAY=0.5              # Reduced from 2.0 for faster processing
+MAX_DELAY=1.5              # Reduced from 5.0 for faster processing
+BATCH_SIZE=50              # Process posts in batches
+CONCURRENT_REQUESTS=3      # Parallel processing
 ```
 
 ### Method 2: System Environment Variables

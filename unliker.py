@@ -1,5 +1,7 @@
 import os
 import pyotp
+import time
+from datetime import datetime
 from dotenv import load_dotenv
 from instagrapi import Client
 from pathlib import Path
@@ -20,6 +22,11 @@ mfa_secret = os.getenv("INSTAGRAM_MFA_SECRET", "")
 # =======================================
 
 output = ""
+
+
+def get_timestamp():
+    """Get current timestamp in [HH:MM:SS] format"""
+    return datetime.now().strftime("[%H:%M:%S]")
 
 
 def validate_env_vars():
@@ -69,13 +76,21 @@ def unlike(client: Client):
         println("🚀 Beginning deletion of liked posts...")
 
         for post in liked:
+            start_time = time.time()
             try:
                 client.media_unlike(post.id)
+                end_time = time.time()
+                execution_time = round(end_time - start_time, 2)
                 removed += 1
                 println(
-                    f"❌ {removed}: Unliked post {post.id} by @{post.user.username}"
+                    f"✅ {removed}: Unliked post {post.id} by @{post.user.username} ({execution_time}s)"
                 )
             except Exception as e:
+                end_time = time.time()
+                execution_time = round(end_time - start_time, 2)
+                println(
+                    f"❌ Failed to unlike post {post.id} by @{post.user.username} ({execution_time}s)"
+                )
                 println("⚠️ Rate limit most likely reached. Try again soon.")
                 println(f"📊 Deleted {removed} liked posts.")
                 println("🔍 Exception details:")
@@ -102,17 +117,18 @@ def unlike(client: Client):
 
 
 def println(line):
-    """Enhanced logging function with emoji support"""
+    """Enhanced logging function with timestamp and emoji support"""
+    timestamped_line = f"{get_timestamp()} {line}"
     if quiet_mode:
         global output
-        output += f"\n{line}"
+        output += f"\n{timestamped_line}"
     else:
-        print(line)
+        print(timestamped_line)
 
 
 def main():
     println("🤖 Instagram Unlike Bot Started")
-    println("=" * 40)
+    println("=" * 50)
 
     # Validate environment variables
     validate_env_vars()
@@ -120,7 +136,7 @@ def main():
     println(f"👤 Username: {username}")
     println(f"🎯 Like removal target: {like_removal_amount}")
     println(f"🔇 Quiet mode: {'ON' if quiet_mode else 'OFF'}")
-    println("=" * 40)
+    println("=" * 50)
 
     try:
         client = init_client()

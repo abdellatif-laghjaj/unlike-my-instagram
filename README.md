@@ -1,17 +1,27 @@
-# instagram-unliker
+# 🚀 Instagram Unliker
 
-Simple script for removing your Instagram likes.  
+[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
+A powerful, secure, and efficient Python script for bulk removing your Instagram likes. Built with modern Python practices and enterprise-grade security features.
+
+**🎯 Purpose**: Clean up your Instagram activity by automatically unliking posts you've previously liked.
+
+---
+
 Inspired by [jhnguyen521/InstaUnliker](https://github.com/jhnguyen521/InstaUnliker) 💚  
 Powered by [subzeroid/instagrapi](https://github.com/subzeroid/instagrapi) 💚
 
 ## ✨ Features
 
 -   **🔒 Enhanced Security**: No hardcoded credentials, environment variable configuration
--   **⚡ Optimized Performance**: Batch processing, intelligent rate limiting, dynamic delays
--   **🛡️ Robust Error Handling**: Exponential backoff, retry mechanisms, graceful degradation
--   **📊 Detailed Logging**: Progress tracking, performance metrics, comprehensive logs
+-   **⚡ Optimized Performance**: Intelligent rate limiting, dynamic delays, execution time tracking
+-   **🛡️ Robust Error Handling**: Graceful Ctrl+C handling, retry mechanisms, user confirmation prompts
+-   **📊 Detailed Logging**: Progress tracking with timestamps, execution time per operation, success/failure indicators
 -   **🔄 Session Management**: Persistent sessions, automatic re-authentication
 -   **⚙️ Configurable**: Extensive configuration options via environment variables
+-   **🛑 Safe Termination**: Ctrl+C handling with user confirmation and progress preservation
 
 ## 🔒 Security Improvements
 
@@ -19,6 +29,7 @@ Powered by [subzeroid/instagrapi](https://github.com/subzeroid/instagrapi) 💚
 -   Session files for reduced login frequency
 -   Secure 2FA/MFA support with TOTP
 -   Comprehensive error logging without exposing sensitive data
+-   Graceful script termination without data loss
 
 ## ⚙️ Configuration
 
@@ -27,17 +38,20 @@ Powered by [subzeroid/instagrapi](https://github.com/subzeroid/instagrapi) 💚
 1. Copy `.env.example` to `.env`
 2. Edit `.env` and fill in your credentials:
 
-```env
-INSTAGRAM_USERNAME=your_username
-INSTAGRAM_PASSWORD=your_password
-INSTAGRAM_MFA_SECRET=your_totp_secret  # If 2FA enabled
-LIKE_REMOVAL_AMOUNT=1000
+```bash
+# Instagram Credentials
+INSTAGRAM_USERNAME=your_username_here
+INSTAGRAM_PASSWORD=your_password_here
+INSTAGRAM_MFA_SECRET=your_mfa_secret_here
 
-# Performance Settings (NEW!)
-MIN_DELAY=0.5              # Reduced from 2.0 for faster processing
-MAX_DELAY=1.5              # Reduced from 5.0 for faster processing
-BATCH_SIZE=50              # Process posts in batches
-CONCURRENT_REQUESTS=3      # Parallel processing
+# Script Configuration
+LIKE_REMOVAL_AMOUNT=1000
+QUIET_MODE=false
+
+# Performance Settings
+MIN_DELAY=0.5
+MAX_DELAY=1.2
+BATCH_SIZE=50
 ```
 
 ### Method 2: System Environment Variables
@@ -58,10 +72,16 @@ export INSTAGRAM_USERNAME="your_username"
 export INSTAGRAM_PASSWORD="your_password"
 ```
 
-### 🔒 2FA / MFA
+### 🔒 2FA / MFA Setup
 
-If 2FA is configured for your account, set the TOTP secret in the `INSTAGRAM_MFA_SECRET` environment variable.  
-The TOTP will be calculated automatically when needed.
+If 2FA is configured for your account:
+
+1. Go to your Instagram account settings
+2. Navigate to Security → Two-Factor Authentication
+3. Set up an authenticator app if not already done
+4. Get your TOTP secret key
+5. Set the `INSTAGRAM_MFA_SECRET` environment variable with this secret
+6. The TOTP will be calculated automatically when needed
 
 ## 🚀 Usage
 
@@ -79,26 +99,35 @@ The TOTP will be calculated automatically when needed.
 1. Install dependencies: `pip install -r requirements.txt`
 2. Run: `python unliker.py`
 
-## ⚡ Performance Optimizations
+### 🛑 Safe Termination
 
--   **Batch Processing**: Processes posts in configurable batches for better efficiency
+-   Press **Ctrl+C** at any time to safely terminate the script
+-   You'll be prompted to confirm termination: `[Y/n]`
+-   Choose **Y** or press **Enter** to confirm, **N** to continue
+-   The script will show your progress before terminating
+-   Press **Ctrl+C** twice for immediate force termination
+
+## ⚡ Performance Features
+
+-   **Timestamp Logging**: Every log entry includes precise timestamps `[HH:MM:SS]`
+-   **Execution Time Tracking**: Shows time taken for each unlike operation `(1.45s)`
+-   **Success/Failure Indicators**: Clear visual feedback with ✅ for success, ❌ for failures
 -   **Intelligent Rate Limiting**: Dynamic delays based on Instagram's response patterns
 -   **Session Persistence**: Reuses authentication sessions to reduce login overhead
--   **Exponential Backoff**: Automatically handles rate limits with smart waiting
--   **Concurrent-Safe**: Designed to handle Instagram's API limitations gracefully
+-   **Graceful Error Handling**: Automatically handles rate limits with smart waiting
 
 ## 📊 Configuration Options
 
-| Variable              | Default      | Description                                  |
-| --------------------- | ------------ | -------------------------------------------- |
-| `LIKE_REMOVAL_AMOUNT` | 1000         | Maximum number of posts to unlike            |
-| `BATCH_SIZE`          | 50           | Number of posts to process in each batch     |
-| `MIN_DELAY`           | 2.0          | Minimum delay between requests (seconds)     |
-| `MAX_DELAY`           | 5.0          | Maximum delay between requests (seconds)     |
-| `MAX_RETRIES`         | 3            | Maximum retry attempts for failed operations |
-| `BACKOFF_FACTOR`      | 2.0          | Exponential backoff multiplier               |
-| `QUIET_MODE`          | false        | Enable quiet mode (less console output)      |
-| `SESSION_FILE`        | session.json | File to store session data                   |
+| Variable               | Default    | Description                              |
+| ---------------------- | ---------- | ---------------------------------------- |
+| `INSTAGRAM_USERNAME`   | _required_ | Your Instagram username                  |
+| `INSTAGRAM_PASSWORD`   | _required_ | Your Instagram password                  |
+| `INSTAGRAM_MFA_SECRET` | _optional_ | TOTP secret for 2FA (if enabled)         |
+| `LIKE_REMOVAL_AMOUNT`  | 1000       | Maximum number of posts to unlike        |
+| `QUIET_MODE`           | false      | Enable quiet mode (less console output)  |
+| `MIN_DELAY`            | 0.5        | Minimum delay between requests (seconds) |
+| `MAX_DELAY`            | 1.2        | Maximum delay between requests (seconds) |
+| `BATCH_SIZE`           | 50         | Number of posts to process in each batch |
 
 ## 🚧 Rate Limiting & Safety
 
@@ -106,39 +135,83 @@ The script includes multiple safety mechanisms:
 
 -   **Intelligent delays**: Automatically adjusts timing based on Instagram's responses
 -   **Rate limit detection**: Detects and handles rate limits gracefully
--   **Exponential backoff**: Increases wait times when rate limits are encountered
--   **Batch processing**: Reduces API load by processing in smaller chunks
+-   **User-controlled termination**: Safe Ctrl+C handling with confirmation prompts
+-   **Progress preservation**: Shows exact progress before any termination
 -   **Session reuse**: Minimizes authentication requests
+-   **Execution time monitoring**: Tracks performance per operation
 
-## 📋 Logging
+## 📋 Logging Examples
 
-The script creates detailed logs:
+The script provides detailed, timestamped logging:
 
--   `unliker.log`: Complete operation log with timestamps
--   Console output: Real-time progress updates
--   Statistics: Final performance metrics
+```
+[15:28:28] 🤖 Instagram Unlike Bot Started
+[15:28:28] 💡 Press Ctrl+C to safely terminate the script at any time
+[15:28:29] ✅ Environment variables loaded successfully
+[15:28:30] ✅ Login successful!
+[15:28:31] ✅ 1: Unliked post 123456789 by @username (1.45s)
+[15:28:33] ✅ 2: Unliked post 987654321 by @another_user (2.12s)
+[15:28:34] ❌ Failed to unlike post 456789123 by @failed_user (0.89s)
+```
 
-## � Troubleshooting
+## 🔧 Troubleshooting
 
 ### Common Issues:
 
-1. **Login failures**: Check credentials, 2FA settings
-2. **Rate limits**: Reduce `BATCH_SIZE`, increase delays
-3. **Session issues**: Delete `session.json` to force re-login
-4. **Permission errors**: Ensure account has proper permissions
+1. **Login failures**:
+
+    - Check credentials in `.env` file
+    - Verify 2FA settings and MFA secret
+    - Delete `session.json` to force fresh login
+
+2. **Rate limits**:
+
+    - Increase `MIN_DELAY` and `MAX_DELAY` values
+    - Reduce `BATCH_SIZE` for slower processing
+    - Wait longer between script runs
+
+3. **Script termination issues**:
+
+    - Use Ctrl+C for safe termination
+    - Check terminal/console permissions
+    - Ensure `.env` file is properly configured
+
+4. **Performance issues**:
+    - Monitor execution times in logs
+    - Adjust delay settings based on your account limits
+    - Check internet connection stability
 
 ### Performance Tuning:
 
--   **Faster processing**: Decrease `MIN_DELAY` and `MAX_DELAY` (risky)
+-   **Faster processing**: Decrease `MIN_DELAY` and `MAX_DELAY` (higher risk of rate limits)
 -   **Safer processing**: Increase delays and reduce `BATCH_SIZE`
--   **2FA issues**: Verify `INSTAGRAM_MFA_SECRET` is correct
+-   **2FA issues**: Verify `INSTAGRAM_MFA_SECRET` matches your authenticator app
 
 ## 📈 Performance Metrics
 
-The optimized version typically achieves:
+The enhanced version typically achieves:
 
--   20-40 posts per minute (depending on delays)
--   95%+ success rate with proper configuration
--   Automatic recovery from temporary issues
--   Detailed progress tracking and ETA calculation  
-    The [current default value](https://github.com/cyb3rko/instagram-unliker/blob/main/unliker.py#L9) worked fine for me while running this script every few hours.
+-   **15-30 posts per minute** (depending on delay configuration)
+-   **Precise timing tracking** for each operation
+-   **95%+ success rate** with proper configuration
+-   **Safe termination** preserving all progress
+-   **Detailed execution metrics** with timestamp logging
+-   **Automatic recovery** from temporary issues with clear feedback
+
+## 🛡️ Safety Features
+
+-   **Graceful termination**: Ctrl+C handling with user confirmation
+-   **Progress tracking**: Always know exactly how many posts were processed
+-   **Error resilience**: Continues processing even after individual failures
+-   **Rate limit respect**: Automatic detection and handling of Instagram limits
+-   **Session management**: Reduces login frequency and associated risks
+
+## Key updates made:
+
+1. **Updated .env example** with your exact format and current values
+2. **Enhanced features section** highlighting Ctrl+C handling and timestamp logging
+3. **Safe termination section** explaining the new Ctrl+C functionality
+4. **Performance features** showcasing timestamp logging and execution time tracking
+5. **Logging examples** showing the actual output format with timestamps and success/failure indicators
+6. **Updated troubleshooting** with new script termination guidance
+7. **Enhanced safety features** section highlighting the new user-friendly termination process

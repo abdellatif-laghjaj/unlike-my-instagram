@@ -1,6 +1,8 @@
 import os
 import pyotp
 import time
+import signal
+import sys
 from datetime import datetime
 from dotenv import load_dotenv
 from instagrapi import Client
@@ -22,11 +24,30 @@ mfa_secret = os.getenv("INSTAGRAM_MFA_SECRET", "")
 # =======================================
 
 output = ""
+should_terminate = False
 
 
 def get_timestamp():
     """Get current timestamp in [HH:MM:SS] format"""
     return datetime.now().strftime("[%H:%M:%S]")
+
+
+def signal_handler(sig, frame):
+    """Handle Ctrl+C gracefully"""
+    global should_terminate
+
+    println("\n⚠️  Ctrl+C detected! Do you want to terminate the script?")
+    try:
+        response = input(f"{get_timestamp()} [Y/n]: ").strip().lower()
+        if response in ["y", "yes", ""]:
+            println("🛑 Script termination requested by user.")
+            should_terminate = True
+        else:
+            println("▶️  Continuing script execution...")
+    except KeyboardInterrupt:
+        # If user presses Ctrl+C again during the prompt
+        println("\n🛑 Force termination requested. Exiting...")
+        sys.exit(0)
 
 
 def validate_env_vars():
@@ -66,16 +87,31 @@ def init_client() -> Client:
 
 
 def unlike(client: Client):
+    global should_terminate
     removed = 0
     println(f"🎯 Target: Remove {like_removal_amount} liked posts")
 
-    while removed < like_removal_amount:
+    while removed < like_removal_amount and not should_terminate:
+        # Check for termination request
+        if should_terminate:
+            println(
+                f"🛑 Script terminated by user. Unliked {removed} posts before termination."
+            )
+            break
+
         liked = client.liked_medias()
         count_reached = False
 
         println("🚀 Beginning deletion of liked posts...")
 
         for post in liked:
+            # Check for termination request before each operation
+            if should_terminate:
+                println(
+                    f"🛑 Script terminated by user. Unliked {removed} posts before termination."
+                )
+                return
+
             start_time = time.time()
             try:
                 client.media_unlike(post.id)
@@ -102,7 +138,7 @@ def unlike(client: Client):
                 count_reached = True
                 break
 
-        if not count_reached:
+        if not count_reached and not should_terminate:
             println("📥 Grabbing more posts...")
             liked = client.liked_medias()
 
@@ -113,7 +149,10 @@ def unlike(client: Client):
                 println(f"✅ Successfully deleted {removed} liked posts.")
                 break
 
-    println(f"🏁 Finished deleting {removed} liked posts!")
+    if not should_terminate:
+        println(f"🏁 Finished deleting {removed} liked posts!")
+    else:
+        println(f"🛑 Script terminated. Final count: {removed} posts unliked.")
 
 
 def println(line):
@@ -127,8 +166,14 @@ def println(line):
 
 
 def main():
+    global should_terminate
+
+    # Set up signal handler for Ctrl+C
+    signal.signal(signal.SIGINT, signal_handler)
+
     println("🤖 Instagram Unlike Bot Started")
-    println("=" * 50)
+    println("💡 Press Ctrl+C to safely terminate the script at any time")
+    println("=" * 60)
 
     # Validate environment variables
     validate_env_vars()
@@ -136,12 +181,17 @@ def main():
     println(f"👤 Username: {username}")
     println(f"🎯 Like removal target: {like_removal_amount}")
     println(f"🔇 Quiet mode: {'ON' if quiet_mode else 'OFF'}")
-    println("=" * 50)
+    println("=" * 60)
 
     try:
         client = init_client()
         unlike(client)
-        println("🎉 Script completed successfully!")
+
+        if not should_terminate:
+            println("🎉 Script completed successfully!")
+        else:
+            println("🛑 Script was terminated by user request.")
+
     except Exception as e:
         println(f"💥 Script failed with error: {str(e)}")
         if not quiet_mode:

@@ -10,8 +10,8 @@ A powerful, secure, and efficient Python script for bulk removing your Instagram
 
 ---
 
-Inspired by [jhnguyen521/InstaUnliker](https://github.com/jhnguyen521/InstaUnliker) 💚  
-Powered by [subzeroid/instagrapi](https://github.com/subzeroid/instagrapi) 💚
+**Inspired by** [jhnguyen521/InstaUnliker](https://github.com/jhnguyen521/InstaUnliker) 💚 and [cyb3rko/instagram-unliker](https://github.com/cyb3rko/instagram-unliker) 💚  
+**Powered by** [subzeroid/instagrapi](https://github.com/subzeroid/instagrapi) 💚
 
 ## ✨ Features
 

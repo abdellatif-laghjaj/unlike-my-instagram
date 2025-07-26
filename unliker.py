@@ -1,21 +1,36 @@
 import os
 import pyotp
-
+from dotenv import load_dotenv
 from instagrapi import Client
 from pathlib import Path
 
+# Load environment variables
+load_dotenv()
+
+# =======================================
+# Configuration from environment variables
 # =======================================
 
-like_removal_amount = 1000
-quiet_mode = False
-username = ""
-password = ""
-# format example: BWI7I3TN3PFUUI6TSGJRYCVMI5YKRVO6
-mfa_secret = ""
+like_removal_amount = int(os.getenv("LIKE_REMOVAL_AMOUNT", 1000))
+quiet_mode = os.getenv("QUIET_MODE", "false").lower() == "true"
+username = os.getenv("INSTAGRAM_USERNAME")
+password = os.getenv("INSTAGRAM_PASSWORD")
+mfa_secret = os.getenv("INSTAGRAM_MFA_SECRET", "")
 
 # =======================================
 
 output = ""
+
+
+def validate_env_vars():
+    """Validate required environment variables"""
+    if not username:
+        println("❌ INSTAGRAM_USERNAME not found in .env file!")
+        exit(1)
+    if not password:
+        println("❌ INSTAGRAM_PASSWORD not found in .env file!")
+        exit(1)
+    println("✅ Environment variables loaded successfully")
 
 
 def init_client() -> Client:
@@ -24,42 +39,47 @@ def init_client() -> Client:
     client.delay_range = [1, 3]
 
     if not os.path.isfile(settings_file):
-        println("Settings file not found, creating one on the fly...")
-        println("Logging in via username and password...")
-        if mfa_secret is not None and mfa_secret != "":
+        println("📄 Settings file not found, creating one on the fly...")
+        println("🔐 Logging in via username and password...")
+        if mfa_secret and mfa_secret != "":
             totp = pyotp.TOTP(mfa_secret).now()
-            println(f"Configured TOTP MFA with code '{totp}'")
+            println(f"🔑 Configured TOTP MFA with code '{totp}'")
             client.login(username, password, verification_code=totp)
         else:
             client.login(username, password)
         client.dump_settings(Path("session.json"))
+        println("💾 Session saved successfully!")
     else:
-        println("Session found, reusing login...")
+        println("🔄 Session found, reusing login...")
         client.load_settings(Path("session.json"))
         client.login(username, password)
+        println("✅ Login successful!")
 
     return client
 
 
 def unlike(client: Client):
     removed = 0
+    println(f"🎯 Target: Remove {like_removal_amount} liked posts")
 
     while removed < like_removal_amount:
         liked = client.liked_medias()
         count_reached = False
 
-        println("Beginning deletion of liked posts...")
+        println("🚀 Beginning deletion of liked posts...")
 
         for post in liked:
             try:
                 client.media_unlike(post.id)
                 removed += 1
-                println(f"{removed}: Deleted {post.id} by {post.user.username}")
+                println(
+                    f"❌ {removed}: Unliked post {post.id} by @{post.user.username}"
+                )
             except Exception as e:
-                println("\nRate limit most likely reached. Try again soon.")
-                println(f"Deleted {removed} liked posts.")
-                println("Exception: ")
-                println(e)
+                println("⚠️ Rate limit most likely reached. Try again soon.")
+                println(f"📊 Deleted {removed} liked posts.")
+                println("🔍 Exception details:")
+                println(str(e))
                 print(output)
                 return
 
@@ -68,20 +88,21 @@ def unlike(client: Client):
                 break
 
         if not count_reached:
-            println("Grabbing more posts...")
+            println("📥 Grabbing more posts...")
             liked = client.liked_medias()
 
             result_count = len(liked)
-            println(f"Grabbed {result_count} more posts.")
+            println(f"📊 Grabbed {result_count} more posts.")
             if result_count == 0:
-                print("No more posts to unlike.")
-                print(f"Deleted {removed} liked posts.")
+                println("🎉 No more posts to unlike!")
+                println(f"✅ Successfully deleted {removed} liked posts.")
                 break
 
-    print(f"Finished deleting {removed} liked posts.")
+    println(f"🏁 Finished deleting {removed} liked posts!")
 
 
 def println(line):
+    """Enhanced logging function with emoji support"""
     if quiet_mode:
         global output
         output += f"\n{line}"
@@ -90,8 +111,25 @@ def println(line):
 
 
 def main():
-    client = init_client()
-    unlike(client)
+    println("🤖 Instagram Unlike Bot Started")
+    println("=" * 40)
+
+    # Validate environment variables
+    validate_env_vars()
+
+    println(f"👤 Username: {username}")
+    println(f"🎯 Like removal target: {like_removal_amount}")
+    println(f"🔇 Quiet mode: {'ON' if quiet_mode else 'OFF'}")
+    println("=" * 40)
+
+    try:
+        client = init_client()
+        unlike(client)
+        println("🎉 Script completed successfully!")
+    except Exception as e:
+        println(f"💥 Script failed with error: {str(e)}")
+        if not quiet_mode:
+            raise
 
 
 if __name__ == "__main__":
